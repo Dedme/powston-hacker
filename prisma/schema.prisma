@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Template {
+  id               String            @id @default(cuid())
+  name             String
+  slug             String            @unique
+  description      String?
+  currentVersionId String?           @unique
+  isPublished      Boolean           @default(false)
+  publishedAt      DateTime?
+  authorName       String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  versions         TemplateVersion[] @relation("TemplateVersions")
+  currentVersion   TemplateVersion?  @relation("CurrentVersion", fields: [currentVersionId], references: [id])
+  testCases        RuleTestCase[]
+  testRuns         RuleTestRun[]
+  testSuites       RuleTestSuite[]
+}
+
+model TemplateVersion {
+  id              String           @id @default(cuid())
+  templateId      String
+  template        Template         @relation("TemplateVersions", fields: [templateId], references: [id], onDelete: Cascade)
+  parentVersionId String?
+  parentVersion   TemplateVersion? @relation("VersionParent", fields: [parentVersionId], references: [id])
+  childVersions   TemplateVersion[] @relation("VersionParent")
+  currentFor      Template?        @relation("CurrentVersion")
+  title           String?
+  message         String?
+  userParams      String
+  aiTunables      String
+  helpers         String
+  main            String
+  compiled        String
+  helperSnippets   HelperSnippet[]
+  createdAt       DateTime         @default(now())
+  testCases        RuleTestCase[]
+  testRuns         RuleTestRun[]
+  suiteRuns        RuleTestSuiteRun[]
+}
+
+model RuleTestCase {
+  id                  String          @id @default(cuid())
+  templateId          String
+  template            Template        @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateVersionId   String
+  templateVersion     TemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Cascade)
+  suiteId             String?
+  suite               RuleTestSuite?  @relation(fields: [suiteId], references: [id], onDelete: SetNull)
+  name                String
+  inputJson           String
+  expectedAction      String?
+  expectedDescription String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  runs                RuleTestRun[]
+}
+
+model RuleTestRun {
+  id                 String           @id @default(cuid())
+  templateId         String
+  template           Template         @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  templateVersionId  String
+  templateVersion    TemplateVersion  @relation(fields: [templateVersionId], references: [id], onDelete: Cascade)
+  testCaseId         String
+  testCase           RuleTestCase     @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+  suiteRunId         String?
+  suiteRun           RuleTestSuiteRun? @relation(fields: [suiteRunId], references: [id], onDelete: SetNull)
+  inputJson          String
+  expectedAction     String?
+  expectedDescription String?
+  actualAction       String?
+  actualDescription  String?
+  actualReasons      String?
+  status             String          @default("pending")
+  createdAt          DateTime        @default(now())
+}
+
+model RuleTestSuite {
+  id                  String             @id @default(cuid())
+  templateId          String
+  template            Template           @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  name                String
+  description         String?
+  userParamsOverride  String?
+  aiTunablesOverride  String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  testCases           RuleTestCase[]
+  suiteRuns           RuleTestSuiteRun[]
+}
+
+model RuleTestSuiteRun {
+  id                  String          @id @default(cuid())
+  suiteId             String
+  suite               RuleTestSuite   @relation(fields: [suiteId], references: [id], onDelete: Cascade)
+  templateVersionId   String
+  templateVersion     TemplateVersion @relation(fields: [templateVersionId], references: [id], onDelete: Cascade)
+  userParamsSnapshot  String?
+  aiTunablesSnapshot  String?
+  passCount           Int             @default(0)
+  failCount           Int             @default(0)
+  errorCount          Int             @default(0)
+  totalCount          Int             @default(0)
+  createdAt           DateTime        @default(now())
+  runs                RuleTestRun[]
+}
+
+model HelperSnippet {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  code        String
+  tags        String?
+  isPublished Boolean           @default(false)
+  authorName  String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  templates   TemplateVersion[]
+  reviews     HelperSnippetReview[]
+}
+
+model HelperSnippetReview {
+  id        String        @id @default(cuid())
+  snippetId String
+  snippet   HelperSnippet @relation(fields: [snippetId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String?
+  authorName String?
+  createdAt DateTime      @default(now())
+}
