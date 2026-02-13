@@ -13,9 +13,9 @@ export default async function LibraryPage({
       ...(query
         ? {
             OR: [
-              { name: { contains: query, mode: "insensitive" } },
-              { description: { contains: query, mode: "insensitive" } },
-              { authorName: { contains: query, mode: "insensitive" } }
+              { name: { contains: query } },
+              { description: { contains: query } },
+              { authorName: { contains: query } }
             ]
           }
         : {})

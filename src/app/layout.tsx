@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
+import AuthGate from "@/components/AuthGate";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -36,7 +37,9 @@ export default function RootLayout({
               </nav>
             </div>
           </header>
-          <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <AuthGate>{children}</AuthGate>
+          </div>
         </div>
       </body>
     </html>
